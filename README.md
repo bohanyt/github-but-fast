@@ -33,6 +33,7 @@ V1 is deliberately boring:
 - **read-only**: model-triggered requests may use only `GET` or `HEAD`
 - **repository allowlist**: `/repos/{owner}/{repo}/...` must target a configured repository
 - **repo-scoped search only**: `/search/*` queries must include `repo:owner/name`
+- **canonical-path validation**: dot-segment and host-escape normalization tricks are rejected
 - **host-side revalidation**: even if generated code asks for a mutation, the host rejects it
 - **GitHub App auth**: the Worker mints short-lived installation tokens; no long-lived PAT is exposed to the sandbox
 - **response cap**: oversized API responses are rejected with a hint to narrow/paginate
@@ -56,6 +57,7 @@ cp .dev.vars.example .dev.vars
 # fill in local test credentials
 npm test
 npm run typecheck
+npm run build
 npm run dev
 ```
 
@@ -78,9 +80,15 @@ V1 uses a static bearer token only as a staging bootstrap. Before broad multi-cl
 
 ## Status
 
-Bootstrap only. No production deployment has been claimed yet.
+Source bootstrap is green in draft PR #1: unit tests, TypeScript checks, and Wrangler dry-run bundling pass. No production deployment or live GitHub-App smoke is claimed yet.
 
-See [`docs/SETUP.md`](docs/SETUP.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), and [`docs/ROLLOUT.md`](docs/ROLLOUT.md).
+Setup docs:
+
+- [`docs/SETUP.md`](docs/SETUP.md) — durable 15-step checklist
+- [`docs/GITHUB_APP.md`](docs/GITHUB_APP.md) — minimal read-only GitHub App setup
+- [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md) — Workers staging/deployment setup
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — trust boundaries and failure model
+- [`docs/ROLLOUT.md`](docs/ROLLOUT.md) — benchmark and multi-client rollout gates
 
 ## License
 
