@@ -3,9 +3,9 @@
 This is the durable version of the initial rollout plan.
 
 1. **Repository** — create `bohanyt/github-but-fast` (public, MIT). ✅
-2. **Bootstrap Worker** — adapt Cloudflare's official Code Mode OpenAPI MCP example. ✅ SOURCE READY in draft PR #1
-3. **Read policy** — expose only GET/HEAD repo/search/rate-limit operations with host-side revalidation. ✅ SOURCE READY
-4. **Tests** — policy/spec-filter tests plus TypeScript checks. ✅ CI run #2 green: 8 tests passed + `tsc --noEmit`
+2. **Bootstrap Worker** — adapt Cloudflare's official Code Mode OpenAPI MCP example. ✅ SOURCE READY in draft PR #1; Wrangler dry-run bundle passes.
+3. **Read policy** — expose only GET/HEAD repo/search/rate-limit operations with host-side revalidation and canonical-path escape protection. ✅ SOURCE READY
+4. **Tests/build** — policy/spec-filter tests, TypeScript checks, and Worker dry-run bundle. ✅ CI run #7 green: 11 tests passed + `tsc --noEmit` + `wrangler deploy --dry-run`.
 5. **Create GitHub App** — owner action required.
 6. **GitHub App permissions** — start read-only: Metadata, Contents, Issues, Pull requests, Actions, Checks, and Commit statuses as needed.
 7. **Install App** — start with `bohanyt/arti-dev` only.
