@@ -51,6 +51,36 @@ describe("assertReadOnlyGithubRequest", () => {
     ).toThrow(/not in GITHUB_ALLOWED_REPOS/);
   });
 
+  it("rejects dot-segment path escapes after an allowed repo prefix", () => {
+    expect(() =>
+      assertReadOnlyGithubRequest({
+        method: "GET",
+        path: "/repos/bohanyt/arti-dev/../../../user",
+        allowedRepos: allowed
+      })
+    ).toThrow(/non-canonical GitHub path/);
+  });
+
+  it("rejects encoded dot-segment path escapes", () => {
+    expect(() =>
+      assertReadOnlyGithubRequest({
+        method: "GET",
+        path: "/repos/bohanyt/arti-dev/%2e%2e/%2e%2e/user",
+        allowedRepos: allowed
+      })
+    ).toThrow(/non-canonical GitHub path/);
+  });
+
+  it("rejects protocol-relative host escapes", () => {
+    expect(() =>
+      assertReadOnlyGithubRequest({
+        method: "GET",
+        path: "//example.com/repos/bohanyt/arti-dev",
+        allowedRepos: allowed
+      })
+    ).toThrow(/non-canonical GitHub path/);
+  });
+
   it("requires repo scoping for search", () => {
     expect(() =>
       assertReadOnlyGithubRequest({
