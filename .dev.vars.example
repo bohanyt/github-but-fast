@@ -1,0 +1,7 @@
+# Copy to .dev.vars for local development. Never commit real values.
+GITHUB_APP_ID="123456"
+GITHUB_INSTALLATION_ID="12345678"
+GITHUB_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+GITHUB_ALLOWED_REPOS="bohanyt/arti-dev"
+MCP_BEARER_TOKEN="replace-with-a-long-random-token"
+GITHUB_RESPONSE_MAX_BYTES="1500000"
