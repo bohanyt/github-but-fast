@@ -1,29 +1,33 @@
-# GitHub App setup (V1)
+# GitHub App setup
 
-GBF V1 authenticates to GitHub as a GitHub App installation. The app is read-only and should initially be installed on **one repository only: `bohanyt/arti-dev`**.
+GBF v0.2 authenticates to GitHub as a **read-only GitHub App installation**.
 
-Do not paste the private key into chat, an issue, a commit, or a `.env` file that may be committed.
+The App may be installed on several selected repositories, but GBF still requires every repository to be listed explicitly in `GITHUB_ALLOWED_REPOS`. Both layers must permit access.
+
+Never paste the private key into chat, an issue, a commit, or any file that could be committed.
 
 ## 1. Register the app
 
-Open GitHub **Settings → Developer settings → GitHub Apps → New GitHub App**.
+Open GitHub:
+
+**Settings → Developer settings → GitHub Apps → New GitHub App**
 
 Suggested values:
 
 - **GitHub App name:** `Bohan GitHub But Fast` (or another available name)
 - **Homepage URL:** `https://github.com/bohanyt/github-but-fast`
-- **Callback URL / user authorization:** not needed for V1
+- **Callback URL / user authorization:** not required for the stable bearer-auth GBF path
 - **Setup URL:** blank
-- **Webhook:** **deselect Active**
-- **Where can this GitHub App be installed?** **Only on this account**
+- **Webhook:** disabled
+- **Where can this GitHub App be installed?** only the intended account unless you explicitly need broader installation
 
-V1 does not consume webhooks. Leaving them disabled removes an unnecessary ingress path and webhook secret.
+GBF does not consume GitHub webhooks. Leaving them disabled removes unnecessary ingress and webhook-secret management.
 
 ## 2. Repository permissions
 
-Use the minimum read-only permissions required for the ARTI benchmark:
+Recommended minimum read-only repository permissions:
 
-| Permission | V1 |
+| Permission | Setting |
 | --- | --- |
 | Metadata | Read-only (GitHub-required baseline) |
 | Contents | Read-only |
@@ -33,50 +37,71 @@ Use the minimum read-only permissions required for the ARTI benchmark:
 | Checks | Read-only |
 | Commit statuses | Read-only |
 
-Leave other repository, organization, account, and user permissions at **No access** unless a concrete read endpoint later proves it is required.
+Leave other repository, organization, account, and user permissions at **No access** unless a concrete GBF read endpoint later proves one is required.
 
-No V1 permission should be `Read & write`.
+No stable v0.2 permission should be `Read & write`.
 
-## 3. Create the app and generate a private key
+## 3. Generate and keep the private key local
 
 After creating the app:
 
 1. record the numeric **App ID**;
-2. generate a new **private key** from the app settings;
-3. keep the downloaded PEM file local until it is entered directly into Cloudflare Secrets.
+2. generate a **private key** from the GitHub App settings;
+3. keep the downloaded PEM outside the repository;
+4. point `GITHUB_PRIVATE_KEY_FILE` at that local file.
 
-The App ID is not itself a secret. The private key is.
+GitHub may issue an RSA private key in PKCS#1 form. GBF converts it in memory for signing when needed; the original file is not modified.
+
+The App ID and Installation ID are configuration identifiers, not strong secrets. The private key is a strong secret.
 
 ## 4. Install the app
 
-Select **Install App** and choose the `bohanyt` account.
+Select **Install App** and choose the intended account.
 
-Choose:
+Prefer:
 
-**Only select repositories → `bohanyt/arti-dev`**
+**Only select repositories**
 
-Do not select **All repositories** for the first staging run.
+Choose only repositories GBF should be able to read.
 
-After installation, record the numeric **Installation ID**. It is visible in the installation/settings URL and can also be retrieved through GitHub's installation API.
+After installation, record the numeric **Installation ID** from the installation/settings URL or GitHub API.
 
-## 5. Values needed by GBF
+## 5. GBF configuration
 
-You will have:
+Example:
 
-```text
+```env
 GITHUB_APP_ID=<numeric app id>
 GITHUB_INSTALLATION_ID=<numeric installation id>
-GITHUB_PRIVATE_KEY=<full PEM private key>
-GITHUB_ALLOWED_REPOS=bohanyt/arti-dev
+GITHUB_PRIVATE_KEY_FILE=C:\path\to\github-app-private-key.pem
+GITHUB_ALLOWED_REPOS=owner/repo-a,owner/repo-b
 ```
 
-Only `GITHUB_PRIVATE_KEY` must be treated as a strong secret here. GBF still keeps the other configuration server-side.
+The App installation and GBF allowlist are independent checks:
 
-## 6. Later multi-repo rollout
+```text
+GitHub App installed on repo
+        AND
+repo is present in GITHUB_ALLOWED_REPOS
+        => GBF may read it
+```
 
-After ARTI staging is proven, the same App installation can be updated to add selected repositories such as other Bohan projects. Update `GITHUB_ALLOWED_REPOS` at the same time.
+Installing the App on a repository does **not** automatically expose it through GBF.
 
-Adding a repository to the GitHub App does **not** automatically bypass GBF's own allowlist; both layers must permit it.
+## 6. Add another project later
+
+To add another project:
+
+1. update the GitHub App installation to include the repository;
+2. add `owner/repo` to `GITHUB_ALLOWED_REPOS`;
+3. restart GBF;
+4. run a read smoke against the new repo.
+
+No source-code change should be necessary.
+
+## Security principle
+
+The GitHub App should remain read-only even though GBF also enforces read-only policy in host code. That gives defense in depth: a policy bug in one layer should still not grant repository mutation authority.
 
 ## Sources
 
