@@ -109,6 +109,8 @@ GITHUB_PRIVATE_KEY_FILE=...
 GITHUB_ALLOWED_REPOS=owner/repo-a,owner/repo-b
 GITHUB_RESPONSE_MAX_BYTES=1500000
 MCP_BEARER_TOKEN=...
+# Optional; enables OAuth discovery for ChatGPT/custom MCP clients.
+GBF_PUBLIC_ORIGIN=https://gbf.example.com
 GBF_HOST=127.0.0.1
 GBF_PORT=8787
 ```
@@ -137,7 +139,7 @@ MCP endpoint:
 POST/GET https://YOUR-HOSTNAME/mcp
 ```
 
-Authentication uses `Authorization: Bearer <MCP_BEARER_TOKEN>`. Compatible clients may also use the optional `X-GBF-Token` API-key header, though some hosted clients restrict custom header names.
+Authentication remains backward-compatible with `Authorization: Bearer <MCP_BEARER_TOKEN>`. Compatible clients may also use the optional `X-GBF-Token` API-key header. When `GBF_PUBLIC_ORIGIN` is configured, GBF additionally exposes an OAuth Authorization Code + PKCE flow with refresh-token support for hosted clients such as ChatGPT. See [`docs/CHATGPT.md`](docs/CHATGPT.md).
 
 ## Client usage
 
@@ -191,6 +193,7 @@ CI covers Windows and Ubuntu. The Worker dry-run build is retained even though t
 - [`docs/BENCHMARK.md`](docs/BENCHMARK.md) — acceptance benchmark and measurement rules
 - [`docs/SETUP.md`](docs/SETUP.md) — setup checklist
 - [`docs/GITHUB_APP.md`](docs/GITHUB_APP.md) — minimal read-only GitHub App configuration
+- [`docs/CHATGPT.md`](docs/CHATGPT.md) — OAuth setup and disposable ChatGPT coexistence gate
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — trust boundaries and failure model
 - [`docs/ROLLOUT.md`](docs/ROLLOUT.md) — client rollout gates
 - [`CHANGELOG.md`](CHANGELOG.md) — stable milestones
