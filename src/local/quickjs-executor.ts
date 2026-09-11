@@ -136,6 +136,7 @@ export class QuickJsExecutor {
 
       const evalResult = vm.evalCode(wrapped, "gbf-execute.js");
       const promiseHandle = vm.unwrapResult(evalResult);
+      runtime.executePendingJobs();
       const settled = await vm.resolvePromise(promiseHandle);
       promiseHandle.dispose();
       const resolvedHandle = vm.unwrapResult(settled);
