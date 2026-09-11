@@ -1,4 +1,5 @@
 import { getInstallationToken, githubHeaders, type GithubAuthConfig } from "./github-auth";
+import { normalizeGithubResponse } from "./github-response";
 import {
   assertReadOnlyGithubRequest,
   filterReadOnlyOpenApiSpec,
@@ -125,5 +126,5 @@ export async function githubRequest(
     };
   }
 
-  return body;
+  return normalizeGithubResponse(opts.path, body);
 }
