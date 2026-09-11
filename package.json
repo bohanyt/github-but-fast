@@ -1,13 +1,15 @@
 {
   "name": "github-but-fast",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A read-only Code Mode gateway for GitHub — fewer tool calls, less context, any MCP-capable agent.",
   "type": "module",
   "private": false,
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "node --watch --env-file=.env.local --import tsx src/local-server.ts",
+    "start": "node --env-file=.env.local --import tsx src/local-server.ts",
+    "dev:worker": "wrangler dev",
     "build": "wrangler deploy --dry-run --outdir dist",
-    "deploy": "wrangler deploy",
+    "deploy:worker": "wrangler deploy",
     "types": "wrangler types env.d.ts --include-runtime false",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
@@ -17,11 +19,15 @@
     "@modelcontextprotocol/sdk": "1.30.0",
     "@modelcontextprotocol/server": "2.0.0",
     "agents": "0.22.0",
-    "jose": "6.2.12"
+    "express": "^5.1.0",
+    "jose": "6.2.12",
+    "quickjs-emscripten": "0.32.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260729.1",
+    "@types/express": "^5.0.3",
     "@types/node": "^26.0.1",
+    "tsx": "^4.20.6",
     "typescript": "^6.0.3",
     "vitest": "5.0.0",
     "wrangler": "4.130.0"
