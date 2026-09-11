@@ -1,115 +1,154 @@
-# Cloudflare staging setup
+# Cloudflare setup
 
-Do this only after the source bootstrap has been accepted/merged and the GitHub App from [`GITHUB_APP.md`](GITHUB_APP.md) exists.
+GBF v0.2 uses Cloudflare primarily as a **Tunnel transport** from remote MCP clients to the local GBF server.
 
-## 1. Import the repository
+The earlier Worker path remains optional.
 
-In Cloudflare:
+## Recommended: Cloudflare Tunnel
 
-**Workers & Pages → Create application → Import a repository**
-
-Connect/authorize the GitHub account if needed, then select:
-
-`bohanyt/github-but-fast`
-
-The Cloudflare Worker/project name must be exactly:
-
-`github-but-fast`
-
-This matches `wrangler.jsonc`; Cloudflare Workers Builds requires the dashboard Worker name and Wrangler `name` to match.
-
-Use `main` as the production branch after the bootstrap PR is merged.
-
-## 2. Build/deploy settings
-
-The repository already contains `wrangler.jsonc`.
-
-Recommended staging configuration:
+Architecture:
 
 ```text
-Build command: npm test && npm run typecheck
-Deploy command: npx wrangler deploy
-Preview deploy command: npx wrangler versions upload
+remote MCP client
+    -> HTTPS hostname
+    -> Cloudflare Tunnel
+    -> 127.0.0.1:8787/mcp
+    -> local GBF QuickJS
+    -> GitHub App -> GitHub
 ```
 
-Cloudflare may provide the deploy/preview commands automatically. Do not add a second framework or Pages project; this is a Worker.
+No inbound router port is required; `cloudflared` creates an outbound connection to Cloudflare.
 
-## 3. Variables and secrets
+### Windows portable binary
 
-Open the Worker:
-
-**Settings → Variables and Secrets → Add**
-
-### Secrets
-
-Add these as **Secret** values:
+If MSI installation is blocked, use the official portable Windows AMD64 executable and keep it at:
 
 ```text
-GITHUB_PRIVATE_KEY
-MCP_BEARER_TOKEN
+tools/cloudflared.exe
 ```
 
-For `GITHUB_PRIVATE_KEY`, paste the complete PEM, including the BEGIN/END lines.
+That path is ignored by Git.
 
-Generate `MCP_BEARER_TOKEN` as a long random value. It is temporary staging client authentication, not a GitHub token.
+Verify the downloaded binary against the checksum published in the corresponding Cloudflare GitHub release before use.
 
-### Server-side configuration
+### One-time login and tunnel creation
 
-These can be normal variables, or secrets if you prefer not to expose repository names/configuration in the dashboard:
+From the repository root:
+
+```powershell
+.\tools\cloudflared.exe tunnel login
+.\tools\cloudflared.exe tunnel create gbf
+.\tools\cloudflared.exe tunnel route dns gbf gbf.example.com
+```
+
+Keep the generated `cert.pem` and tunnel credential JSON outside the repository. Never commit or paste them into prompts.
+
+### Example config
+
+Cloudflare's default local config path is typically under `%USERPROFILE%\.cloudflared\config.yml`.
+
+```yaml
+tunnel: YOUR-TUNNEL-ID
+credentials-file: C:\Users\YOU\.cloudflared\YOUR-TUNNEL-ID.json
+
+ingress:
+  - hostname: gbf.example.com
+    service: http://127.0.0.1:8787
+  - service: http_status:404
+```
+
+Validate:
+
+```powershell
+.\tools\cloudflared.exe tunnel ingress validate
+```
+
+### Run
+
+After `.env.local` and the tunnel are configured:
+
+```powershell
+npm run up
+```
+
+This starts both:
+
+- GBF local server
+- named Cloudflare Tunnel (`gbf` by default)
+
+Override the tunnel name with `GBF_TUNNEL_NAME` when necessary.
+
+### Smoke
+
+Public health:
+
+```powershell
+Invoke-RestMethod https://gbf.example.com/health | Format-List
+```
+
+Expected fields include:
 
 ```text
-GITHUB_APP_ID=<app id>
-GITHUB_INSTALLATION_ID=<installation id>
-GITHUB_ALLOWED_REPOS=bohanyt/arti-dev
-GITHUB_RESPONSE_MAX_BYTES=1500000
+ok      : True
+service : github-but-fast
+runtime : local
+mode    : read-only
+sandbox : quickjs
 ```
 
-Never put `GITHUB_PRIVATE_KEY` or `MCP_BEARER_TOKEN` into `wrangler.jsonc` or the public repository.
+The public health response intentionally does not reveal the repository allowlist.
 
-## 4. Deploy staging
+Then test the actual remote `/mcp` endpoint with an authenticated MCP client. A health check alone is not sufficient proof.
 
-Use the default `workers.dev` hostname first. Do not configure a custom `artiberarti.com` hostname until the standalone benchmark passes.
+## MCP authentication
 
-Expected public health endpoint:
-
-```text
-https://<worker>.workers.dev/health
-```
-
-Expected MCP endpoint:
-
-```text
-https://<worker>.workers.dev/mcp
-```
-
-`/health` requires no auth and exposes no repository data. `/mcp` requires:
+Preferred:
 
 ```http
 Authorization: Bearer <MCP_BEARER_TOKEN>
 ```
 
-## 5. First smoke
+GBF also accepts an optional `X-GBF-Token` header for clients that support arbitrary API-key request headers, but some hosted clients reject unapproved custom header names. Standard `Authorization` is the portable default.
 
-Before connecting an AI client broadly:
+## Availability model
 
-1. `/health` returns `ok: true`, `mode: read-only`;
-2. unauthenticated `/mcp` returns 401;
-3. authenticated MCP initialize/list-tools succeeds;
-4. Code Mode exposes the OpenAPI `search` + `execute` surface;
-5. GET against `bohanyt/arti-dev` works;
-6. POST/PUT/PATCH/DELETE attempts fail closed;
-7. GET against a repo outside `GITHUB_ALLOWED_REPOS` fails closed;
-8. global `/search/*` without `repo:bohanyt/arti-dev` fails closed;
-9. binary/oversized responses fail with a bounded structured error.
+The tunnel is deliberately workstation-first:
 
-Only then move to the ARTI benchmark.
+```text
+GBF process running + cloudflared running -> remote MCP available
+process stopped / laptop asleep           -> remote MCP unavailable
+```
 
-## 6. Authentication after staging
+This is expected. GBF is not intended to become a correctness dependency; clients should fall back to their normal GitHub integration when the fast path is offline.
 
-The static `MCP_BEARER_TOKEN` is deliberately a bootstrap mechanism. Before broad multi-client use, evaluate proper remote-MCP OAuth / Cloudflare Access so clients can authenticate without sharing one static bearer token.
+## Optional Cloudflare Worker path
+
+The repository still contains:
+
+- `wrangler.jsonc`
+- Worker source/build path
+- `npm run dev:worker`
+- `npm run build`
+- `npm run deploy:worker`
+
+The Worker path originated from Cloudflare's Code Mode/OpenAPI MCP example and remains useful for experimentation or a future hosted deployment.
+
+However, Dynamic Worker execution may require a paid Cloudflare Workers plan. The stable v0.2 local-first runtime avoids that requirement by running QuickJS locally.
+
+Do not configure Worker secrets unless you intentionally choose the hosted path.
+
+## Security checklist
+
+- tunnel credentials stay outside the repository;
+- `.env.local` and private keys stay local;
+- public hostname terminates HTTPS at Cloudflare;
+- GBF binds only to `127.0.0.1` by default;
+- `/mcp` requires authentication;
+- GitHub App is read-only and repository-scoped;
+- normal GitHub tooling remains the mutation path.
 
 ## Sources
 
-- Cloudflare Workers Builds — https://developers.cloudflare.com/workers/ci-cd/builds/
-- Cloudflare Git integration — https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/
-- Cloudflare Secrets — https://developers.cloudflare.com/workers/configuration/secrets/
+- Cloudflare Tunnel documentation — https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/
+- Cloudflare Tunnel configuration — https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/configure-tunnels/local-management/configuration-file/
+- Cloudflare Workers documentation — https://developers.cloudflare.com/workers/
