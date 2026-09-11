@@ -1,0 +1,13 @@
+GitHub But Fast includes architecture and implementation patterns adapted from the
+Cloudflare Agents Code Mode examples:
+
+  https://github.com/cloudflare/agents/tree/main/examples/codemode-mcp-openapi
+
+Cloudflare Agents is licensed under the MIT License.
+
+GitHub's REST OpenAPI description is consumed at runtime from:
+
+  https://github.com/github/rest-api-description
+
+GitHub and Cloudflare are trademarks of their respective owners. This project is
+not an official GitHub or Cloudflare product.
