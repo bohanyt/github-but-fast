@@ -5,6 +5,7 @@ import type { GithubClientConfig } from "../github-client";
 
 export interface LocalConfig extends GithubClientConfig {
   MCP_BEARER_TOKEN: string;
+  GBF_PUBLIC_ORIGIN?: string;
   HOST: string;
   PORT: number;
 }
@@ -51,6 +52,7 @@ export function loadLocalConfig(): LocalConfig {
     GITHUB_ALLOWED_REPOS: required("GITHUB_ALLOWED_REPOS"),
     GITHUB_RESPONSE_MAX_BYTES: process.env.GITHUB_RESPONSE_MAX_BYTES,
     MCP_BEARER_TOKEN: required("MCP_BEARER_TOKEN"),
+    GBF_PUBLIC_ORIGIN: process.env.GBF_PUBLIC_ORIGIN?.trim() || undefined,
     HOST: process.env.GBF_HOST?.trim() || "127.0.0.1",
     PORT: port
   };
