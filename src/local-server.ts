@@ -10,8 +10,14 @@ const executor = new QuickJsExecutor();
 const spec = await getReadOnlySpec();
 
 function authorized(request: Request): boolean {
-  const header = request.header("authorization");
-  return header === `Bearer ${config.MCP_BEARER_TOKEN}`;
+  const bearer = request.header("authorization");
+  if (bearer === `Bearer ${config.MCP_BEARER_TOKEN}`) return true;
+
+  // Claude custom connectors support API-key style request headers when
+  // configured with "No sign-in". Use a dedicated header so Claude's own
+  // OAuth/Authorization handling cannot collide with GBF authentication.
+  const apiKey = request.header("x-gbf-token");
+  return apiKey === config.MCP_BEARER_TOKEN;
 }
 
 function createGithubServer() {
