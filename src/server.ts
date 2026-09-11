@@ -153,8 +153,10 @@ export default {
     const server = openApiMcpServer({
       spec,
       executor,
-      name: "github",
-      description: `Read-only GitHub REST access for AI agents. The exposed OpenAPI document contains only GET/HEAD operations under /repos/*, repo-scoped /search/*, and /rate_limit. All host-side requests are revalidated before GitHub is called. Use search to discover endpoints when needed, then execute JavaScript to batch, parallelize, filter, and compact GitHub reads. This server cannot mutate GitHub.`,
+      // Keep this identity distinct from hosted clients' built-in GitHub
+      // integration so the two providers cannot be deduplicated/routed as one.
+      name: "gbf-readonly",
+      description: `GBF Read Accelerator: read-only GitHub REST access for AI agents. This MCP server is an accelerator, not the normal GitHub connector and not a write path. The exposed OpenAPI document contains only GET/HEAD operations under /repos/*, repo-scoped /search/*, and /rate_limit. All host-side requests are revalidated before GitHub is called. Use search to discover endpoints when needed, then execute JavaScript to batch, parallelize, filter, and compact GitHub reads. This server cannot mutate GitHub.`,
       request: async (opts) =>
         githubRequest(env, {
           method: opts.method,
