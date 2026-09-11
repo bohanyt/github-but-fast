@@ -215,7 +215,7 @@ export class GbfOAuthService {
     const scope = normalizeScope(input.scope);
     const resource = input.resource || this.resource;
     if (resource !== this.resource) throw new Error("resource does not match GBF MCP endpoint");
-    const code = randomBytes(32).toString("base64url");
+    const code = Buffer.from(randomBytes(32)).toString("base64url");
     this.pendingCodes.set(code, {
       clientId: input.clientId,
       redirectUri: input.redirectUri,
@@ -289,7 +289,7 @@ export class GbfOAuthService {
       .setAudience(this.resource)
       .setSubject("gbf-owner")
       .setIssuedAt()
-      .setJti(randomBytes(16).toString("hex"))
+      .setJti(Buffer.from(randomBytes(16)).toString("hex"))
       .setExpirationTime(Math.floor(Date.now() / 1000) + ACCESS_TTL_SECONDS)
       .sign(this.key);
 
@@ -307,7 +307,7 @@ export class GbfOAuthService {
         .setAudience(REFRESH_AUDIENCE)
         .setSubject("gbf-owner")
         .setIssuedAt()
-        .setJti(randomBytes(16).toString("hex"))
+        .setJti(Buffer.from(randomBytes(16)).toString("hex"))
         .setExpirationTime(REFRESH_TTL)
         .sign(this.key);
     }
