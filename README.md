@@ -189,6 +189,7 @@ CI covers Windows and Ubuntu. The Worker dry-run build is retained even though t
 
 ## Project docs
 
+- [`docs/AGENT_TOOLING_RULEBOOK.md`](docs/AGENT_TOOLING_RULEBOOK.md) — operational rules learned from real ChatGPT/Claude/swarm experiments
 - [`docs/PROMPTING.md`](docs/PROMPTING.md) — reusable prompts and read patterns
 - [`docs/BENCHMARK.md`](docs/BENCHMARK.md) — acceptance benchmark and measurement rules
 - [`docs/SETUP.md`](docs/SETUP.md) — setup checklist
