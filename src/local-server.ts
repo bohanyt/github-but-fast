@@ -34,13 +34,13 @@ app.disable("x-powered-by");
 app.use(express.json({ limit: "2mb" }));
 
 app.get("/health", (_request: Request, response: Response) => {
+  response.set("Cache-Control", "no-store");
   response.json({
     ok: true,
     service: "github-but-fast",
     runtime: "local",
     mode: "read-only",
-    sandbox: "quickjs",
-    allowed_repos: config.GITHUB_ALLOWED_REPOS.split(",").map((value) => value.trim())
+    sandbox: "quickjs"
   });
 });
 
