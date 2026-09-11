@@ -13,9 +13,9 @@ function authorized(request: Request): boolean {
   const bearer = request.header("authorization");
   if (bearer === `Bearer ${config.MCP_BEARER_TOKEN}`) return true;
 
-  // Claude custom connectors support API-key style request headers when
-  // configured with "No sign-in". Use a dedicated header so Claude's own
-  // OAuth/Authorization handling cannot collide with GBF authentication.
+  // Claude custom connectors may support API-key style request headers when
+  // configured with "No sign-in". Keep this optional path for compatible
+  // clients while Authorization remains the primary portable mechanism.
   const apiKey = request.header("x-gbf-token");
   return apiKey === config.MCP_BEARER_TOKEN;
 }
@@ -25,7 +25,7 @@ function createGithubServer() {
     spec,
     executor,
     name: "github",
-    description: `GitHub But Fast (GBF): read-only GitHub REST access optimized to reduce model-visible tool round trips. Use search only when endpoint discovery is required. Prefer one execute call that fans out fresh GitHub reads with Promise.all(), filters intermediate data inside the sandbox, and returns a compact result. The sandbox has no filesystem, shell, process environment, or arbitrary network access. Host-side policy allows only GET/HEAD on allowlisted repositories and repo-scoped search.`,
+    description: `GitHub But Fast (GBF): read-only GitHub REST access optimized to reduce model-visible tool round trips. Prefer one execute call that fans out fresh reads with Promise.all(), filters intermediate data inside the sandbox, and returns a compact result. Use search only when an endpoint is genuinely unknown. Common reads do not require discovery: GET /repos/{owner}/{repo}/contents/{path}?ref=... returns GBF-normalized UTF-8 text in content (not GitHub base64); GET /repos/{owner}/{repo}/issues/{number}; GET /repos/{owner}/{repo}/issues/{number}/comments with per_page=100; GET /repos/{owner}/{repo}/pulls/{number}; GET /search/code with q including repo:owner/repo. Do not manually base64-decode normalized contents responses. The sandbox has no filesystem, shell, process environment, or arbitrary network access. Host-side policy allows only GET/HEAD on allowlisted repositories and repo-scoped search.`,
     request: async (opts) =>
       githubRequest(config, {
         method: opts.method,
