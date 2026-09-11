@@ -1,6 +1,7 @@
 const READ_METHODS = new Set(["GET", "HEAD"]);
 const SEARCH_PREFIX = "/search/";
 const REPOS_PREFIX = "/repos/";
+const GITHUB_ORIGIN = "https://api.github.com";
 
 export function parseAllowedRepos(raw: string): Set<string> {
   const repos = raw
@@ -19,6 +20,17 @@ export function parseAllowedRepos(raw: string): Set<string> {
   }
 
   return new Set(repos);
+}
+
+function assertCanonicalGithubPath(path: string): void {
+  if (!path.startsWith("/") || path.includes("?") || path.includes("#")) {
+    throw new Error(`Read-only policy rejected non-canonical GitHub path ${path}`);
+  }
+
+  const resolved = new URL(path, GITHUB_ORIGIN);
+  if (resolved.origin !== GITHUB_ORIGIN || resolved.pathname !== path) {
+    throw new Error(`Read-only policy rejected non-canonical GitHub path ${path}`);
+  }
 }
 
 function repoFromPath(path: string): string | null {
@@ -45,6 +57,8 @@ export function assertReadOnlyGithubRequest(input: {
   if (!READ_METHODS.has(method)) {
     throw new Error(`Read-only policy rejected HTTP method ${method}`);
   }
+
+  assertCanonicalGithubPath(input.path);
 
   const repo = repoFromPath(input.path);
   if (repo) {
