@@ -3,9 +3,9 @@
 This is the durable version of the initial rollout plan.
 
 1. **Repository** — create `bohanyt/github-but-fast` (public, MIT). ✅
-2. **Bootstrap Worker** — adapt Cloudflare's official Code Mode OpenAPI MCP example. IN PROGRESS
-3. **Read policy** — expose only GET/HEAD repo/search/rate-limit operations. IN PROGRESS
-4. **Tests** — policy/spec-filter tests plus TypeScript checks. IN PROGRESS
+2. **Bootstrap Worker** — adapt Cloudflare's official Code Mode OpenAPI MCP example. ✅ SOURCE READY in draft PR #1
+3. **Read policy** — expose only GET/HEAD repo/search/rate-limit operations with host-side revalidation. ✅ SOURCE READY
+4. **Tests** — policy/spec-filter tests plus TypeScript checks. ✅ CI run #2 green: 8 tests passed + `tsc --noEmit`
 5. **Create GitHub App** — owner action required.
 6. **GitHub App permissions** — start read-only: Metadata, Contents, Issues, Pull requests, Actions, Checks, and Commit statuses as needed.
 7. **Install App** — start with `bohanyt/arti-dev` only.
@@ -20,4 +20,6 @@ This is the durable version of the initial rollout plan.
 
 ## Manual owner steps
 
-The first owner action needed after the bootstrap PR is ready is **Step 5: create the GitHub App**. Everything before that can be prepared without account secrets.
+The first owner action needed after the bootstrap PR is ready is **Step 5: create the GitHub App**. Everything before that is prepared without account secrets.
+
+PR #1 remains draft. No Cloudflare deployment or GitHub App credentials have been created or configured yet.
