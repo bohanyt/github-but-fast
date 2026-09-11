@@ -43,14 +43,16 @@ Expected health output includes:
 
 ## ChatGPT plugin form
 
-Create a Personal plugin / custom MCP connection with:
+Create a Personal plugin / custom MCP connection with a **routing-distinct display name**:
 
 ```text
-Name: GitHub But Fast
+Name: GBF Read Accelerator
 Connection: Server URL
 Server URL: https://gbf.artiberarti.com/mcp
 Authentication: OAuth
 ```
+
+Avoid naming the ChatGPT personal plugin simply `GitHub` or starting its display name with `GitHub`. ChatGPT already has a built-in GitHub connector and hosted routing can treat overlapping provider identities as substitutes. GBF's MCP server identity is deliberately `gbf-readonly` for the same reason.
 
 During Scan Tools, ChatGPT should discover OAuth metadata and open the GBF authorization page. Enter the local `MCP_BEARER_TOKEN` only into that page. The server redirects back to ChatGPT with an authorization code; ChatGPT exchanges it using PKCE and can refresh access later.
 
@@ -65,13 +67,17 @@ Both are read-only by host policy. Use the normal GitHub connector for comments,
 
 Test in a disposable ChatGPT conversation first:
 
-1. GBF `execute` performs a private-repo read.
-2. GBF rejects a write/mutation attempt at the host policy boundary.
-3. Built-in GitHub is still visible and can perform a normal read in the same chat.
-4. Built-in GitHub can perform a harmless test-repo write when explicitly requested.
-5. No `Forbidden`, routing disappearance, or plugin/tool collision occurs after reconnect/new chat.
+1. Built-in GitHub is visible before GBF is invoked.
+2. GBF `execute` performs a private-repo read.
+3. In the **next turn of the same chat**, built-in GitHub is still visible and can independently read the same repository.
+4. GBF rejects a write/mutation attempt at the host policy boundary.
+5. Built-in GitHub can perform a harmless test-repo write when explicitly requested.
+6. Close/reopen or start another disposable chat and repeat the read/read coexistence check.
+7. No `Forbidden`, routing disappearance, provider replacement, or plugin/tool collision occurs after GBF use.
 
-Only then use GBF in ARTI/Recantor agent prompts. If GBF is unavailable, fall back to the normal GitHub connector; GitHub remains the source of truth.
+A first-turn success is **not** sufficient. The known failure signature is: built-in GitHub is available initially, GBF is invoked once, then the next turn exposes only GBF and routes generic GitHub requests back to GBF. If that happens, stop rollout immediately; do not use GBF in ARTI/Recantor ChatGPT swarms.
+
+Only after the multi-turn coexistence gate passes should GBF be used in ARTI/Recantor agent prompts. If GBF is unavailable, fall back to the normal GitHub connector; GitHub remains the source of truth.
 
 ## Compatibility
 
@@ -89,3 +95,4 @@ or the compatibility `X-GBF-Token` header where the client supports it. OAuth ac
 - Dynamic client registration is supported for compatibility. A future release can add CIMD if needed.
 - OAuth authorization codes are one-time and short-lived in memory. A GBF restart during the browser authorization step requires restarting that step.
 - Access/refresh/client-registration tokens are signed from a key derived from the existing local secret, so no additional secret file is required.
+- ChatGPT's built-in GitHub coexistence is a product-routing property outside GBF's host policy, so the multi-turn gate remains mandatory after connector or ChatGPT updates.

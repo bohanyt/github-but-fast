@@ -29,8 +29,11 @@ function createGithubServer() {
   return openApiMcpServer({
     spec,
     executor,
-    name: "github",
-    description: `GitHub But Fast (GBF): strictly read-only GitHub REST access optimized to reduce model-visible tool round trips. The outer search and execute tools cannot mutate GitHub: host-side policy accepts only GET/HEAD on allowlisted repositories and repo-scoped search. Prefer one execute call that fans out fresh reads with Promise.all(), filters intermediate data inside the sandbox, and returns a compact result. Use search only when an endpoint is genuinely unknown. Common reads do not require discovery: GET /repos/{owner}/{repo}/contents/{path}?ref=... returns GBF-normalized UTF-8 text in content (not GitHub base64); GET /repos/{owner}/{repo}/issues/{number}; GET /repos/{owner}/{repo}/issues/{number}/comments with per_page=100; GET /repos/{owner}/{repo}/pulls/{number}; GET /search/code with q including repo:owner/repo. Do not manually base64-decode normalized contents responses. The sandbox has no filesystem, shell, process environment, or arbitrary network access. Use the normal GitHub connector for comments, branches, PR mutations, merges, or any write.`,
+    // Keep the MCP server identity distinct from ChatGPT's built-in GitHub
+    // connector. Reusing the generic name "github" can make hosted clients
+    // route/deduplicate the two integrations as if they were one provider.
+    name: "gbf-readonly",
+    description: `GBF Read Accelerator: strictly read-only GitHub REST access optimized to reduce model-visible tool round trips. This MCP server is an accelerator, not the normal GitHub connector and not a write path. The outer search and execute tools cannot mutate GitHub: host-side policy accepts only GET/HEAD on allowlisted repositories and repo-scoped search. Prefer one execute call that fans out fresh reads with Promise.all(), filters intermediate data inside the sandbox, and returns a compact result. Use search only when an endpoint is genuinely unknown. Common reads do not require discovery: GET /repos/{owner}/{repo}/contents/{path}?ref=... returns GBF-normalized UTF-8 text in content (not GitHub base64); GET /repos/{owner}/{repo}/issues/{number}; GET /repos/{owner}/{repo}/issues/{number}/comments with per_page=100; GET /repos/{owner}/{repo}/pulls/{number}; GET /search/code with q including repo:owner/repo. Do not manually base64-decode normalized contents responses. The sandbox has no filesystem, shell, process environment, or arbitrary network access. Use the normal GitHub connector for comments, branches, PR mutations, merges, or any write.`,
     request: async (opts) =>
       githubRequest(config, {
         method: opts.method,
