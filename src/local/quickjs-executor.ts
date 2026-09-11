@@ -136,8 +136,9 @@ export class QuickJsExecutor {
 
       const evalResult = vm.evalCode(wrapped, "gbf-execute.js");
       const promiseHandle = vm.unwrapResult(evalResult);
+      const settledPromise = vm.resolvePromise(promiseHandle);
       runtime.executePendingJobs();
-      const settled = await vm.resolvePromise(promiseHandle);
+      const settled = await settledPromise;
       promiseHandle.dispose();
       const resolvedHandle = vm.unwrapResult(settled);
       const serialized = vm.getString(resolvedHandle);
