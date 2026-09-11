@@ -1,3 +1,4 @@
+import { createPrivateKey } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { GithubClientConfig } from "../github-client";
@@ -14,12 +15,26 @@ function required(name: string): string {
   return value;
 }
 
+export function normalizePrivateKeyForJose(value: string): string {
+  const normalized = value.includes("\\n") ? value.replace(/\\n/g, "\n") : value;
+  if (normalized.includes("-----BEGIN PRIVATE KEY-----")) return normalized;
+
+  try {
+    return createPrivateKey(normalized)
+      .export({ format: "pem", type: "pkcs8" })
+      .toString();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`GITHUB private key is not a valid PEM private key: ${message}`);
+  }
+}
+
 function privateKey(): string {
   const inline = process.env.GITHUB_PRIVATE_KEY;
-  if (inline?.trim()) return inline;
+  if (inline?.trim()) return normalizePrivateKeyForJose(inline);
 
   const file = required("GITHUB_PRIVATE_KEY_FILE");
-  return readFileSync(resolve(file), "utf8");
+  return normalizePrivateKeyForJose(readFileSync(resolve(file), "utf8"));
 }
 
 export function loadLocalConfig(): LocalConfig {
